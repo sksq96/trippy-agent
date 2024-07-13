@@ -90,5 +90,12 @@ def plan():
     _, text = agents.generate_plan(goal)
     return jsonify({ "plan": text })
 
+@app.route('/execute_step', methods=['POST'])
+def execute_step():
+    data = request.json
+    step_string = data.get('step')
+    steps, text = agents.execute_step(step_string)
+    return jsonify({ "result": text })
+
 if __name__ == '__main__':
     app.run(debug=True)

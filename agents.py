@@ -23,7 +23,7 @@ You: Okay, let's go to this nearest pizza restaurant, order a pepperoni pizza an
 """
               
 def generate_plan(goal):
-    "Develop a step by step plan to help the user achieve the goal: " + goal + ". Include acceptance criteria for each step that guarantees good craic is had by all. Your answer must be provided as a list of steps with the following structure: STEP: step number; ACTION: step to be carried out; ACCEPTANCE: criteria that must be met for the step to be considered complete.\n. Do not use markdown, only plaintext. Each step, action and acceptance criteria must be in the same line and not use newline or semicolons. Return only the numbered list of steps. If the goal is to difficult to achieve, provide a deus ex machina to assist the user."
+    message = "Develop a step by step plan to help the user achieve the goal: " + goal + ". Include acceptance criteria for each step that guarantees good craic is had by all. Your answer MUST BE FORMATTED AS A LIST OF STEPS FORMATTED IN THE FOLLOWING WAY: STEP: step number; ACTION: step to be carried out; ACCEPTANCE: criteria that must be met for the step to be considered complete.\n. Do not use markdown, only plaintext. Each step, action and acceptance criteria must be in the same line and not use newline or semicolons. Return only the numbered list of steps. If the goal is to difficult to achieve, provide a deus ex machina to assist the user."
     steps, text = execute_message(message)
     print(text)
     parsed = text.split("\n")
@@ -38,6 +38,7 @@ def execute_step(step_string):
     _, action, acceptance = step_string.split(";")
     message = f"Execute the action to the best of your abilities: {action}. IT IS ABSOLUTELY VITAL that the acceptance criteria can be met without the aid of a 'human': {acceptance}. If it does not seem achievable, provide a list of specific tasks for the 'human' to complete. MAKE THEM SPICY. MAKE THEM CRINGE. REMEMBERE WE ARE HERE TO HAVE A GOOD TIME."
     steps, text = execute_message(message)
+    return steps, text
 
 def execute_message(message):
     try:  
