@@ -23,7 +23,7 @@ You: Okay, let's go to this nearest pizza restaurant, order a pepperoni pizza an
 """
               
 def generate_plan(goal):
-    message = "Develop a step by step plan to help the user achieve the goal: " + goal + ". Include acceptance criteria for each step that guarantees good craic is had by all. Your answer must be provided as an ordered list of steps, in JSON format with the following structure: {action: 'string', acceptance_criteria: 'string'}"
+    message = "Develop a step by step plan to help the user achieve the goal: " + goal + ". Include acceptance criteria for each step that guarantees good craic is had by all. Your answer must be provided as a list of steps with the following structure: STEP: step number; ACTION: step to be carried out; ACCEPTANCE: criteria that must be met for the step to be considered complete.\n. Do not use markdown, only plaintext. Each step, action and acceptance criteria must be in the same line and not use newline or semicolons"
     
     try:
         res = co.chat(
@@ -72,14 +72,17 @@ def generate_plan(goal):
     except Exception as e:
       return { "error": f"An unexpected error occurred: {e}" } 
 
-def execute_step(step):
-    message = "determine the " + step + ". Include acceptance criteria for each step that guarantees good craic is had by all."
-    tool_results = []
-    for call in step["tool_calls"]:
-        tool_result = invoke_tool(cohere.ToolCall(name=call["name"], parameters=call["parameters"]))
-        tool_results.append({
-            "call": {"name": call["name"], "parameters": call["parameters"]},
-            "outputs": tool_result
-        })
+# e.g. 1. STEP: 1; ACTION: Search for ways to make money; ACCEPTANCE: A list of at least 10 money-making ideas.
+def execute_step(step_string):
+    _, action, acceptance = step_string.split(";")
+    message = ""
     
-    return tool_results
+    # tool_results = []
+    # for call in step["tool_calls"]:
+    #     tool_result = invoke_tool(cohere.ToolCall(name=call["name"], parameters=call["parameters"]))
+    #     tool_results.append({
+    #         "call": {"name": call["name"], "parameters": call["parameters"]},
+    #         "outputs": tool_result
+    #     })
+    
+    # return tool_results
