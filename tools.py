@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 import cohere
 import os
 
-COHERE_API_KEY = 'tBZEDWJ0DN7QIWxNrz525ZiW8rnU2JMT2Zvv5pNv'
-co = cohere.Client(api_key=COHERE_API_KEY)
+cohere_key = os.environ["COHERE_API_KEY"]
+co = cohere.Client(api_key=cohere_key)
 
 def list_calendar_events(days: int = 7, max_results: int = 10):
     print("Listing calendar events")
