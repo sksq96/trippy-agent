@@ -5,7 +5,7 @@ from tools import tools, invoke_tool
 
 app = Flask(__name__)
 
-COHERE_API_KEY = "tBZEDWJ0DN7QIWxNrz525ZiW8rnU2JMT2Zvv5pNv"
+COHERE_API_KEY = os.environ.get("COHERE_API_KEY")
 co = cohere.Client(api_key=COHERE_API_KEY)
 
 PREAMBLE = """
@@ -28,38 +28,59 @@ You: Okay, let's go to this nearest pizza restaurant, order a pepperoni pizza an
 def generate_plan():
     data = request.json
     goal = data.get('goal')
+    location = data.get('location')
     
     if not goal:
         return jsonify({"error": "No goal provided"}), 400
     
-    res = co.chat(
-        model="command-r",
-        preamble=PREAMBLE,
-        message=goal,
-        force_single_step=False,
-        tools=tools
-    )
+    message = goal
+    if location:
+        message += f" (Location: {location['lat']}, {location['lon']})"
     
-    steps = [res.text]
-    
-    while res.tool_calls:
-        tool_results = []
-        for call in res.tool_calls:
-            tool_results.append({"call": call, "outputs": invoke_tool(call)})
-        
+    try:
         res = co.chat(
             model="command-r",
             preamble=PREAMBLE,
-            chat_history=res.chat_history,
-            message="",
+            message=message,
             force_single_step=False,
-            tools=tools,
-            tool_results=tool_results,
+            tools=tools
         )
         
-        steps.append(res.text)
+        steps = [{
+            "text": res.text,
+            "tool_calls": [{"name": call.name, "parameters": call.parameters} for call in (res.tool_calls or [])]
+        }]
+        
+        while res.tool_calls:
+            tool_results = []
+            for call in res.tool_calls:
+                tool_result = invoke_tool(call)
+                tool_results.append({
+                    "call": {"name": call.name, "parameters": call.parameters},
+                    "outputs": tool_result
+                })
+            
+            res = co.chat(
+                model="command-r",
+                preamble=PREAMBLE,
+                chat_history=res.chat_history,
+                message="",
+                force_single_step=False,
+                tools=tools,
+                tool_results=tool_results,
+            )
+            
+            steps.append({
+                "text": res.text,
+                "tool_calls": [{"name": call.name, "parameters": call.parameters} for call in (res.tool_calls or [])],
+                "tool_results": tool_results
+            })
+        
+        return jsonify({"plan": steps})
     
-    return jsonify({"plan": steps})
+    except Exception as e:
+        app.logger.error(f"An error occurred: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
