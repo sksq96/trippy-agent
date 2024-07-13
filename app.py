@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import cohere
 import os
 from tools import tools, invoke_tool
+import agents
 
 app = Flask(__name__)
 
@@ -81,6 +82,13 @@ def generate_plan():
     except Exception as e:
         app.logger.error(f"An error occurred: {str(e)}")
         return jsonify({"error": "An unexpected error occurred"}), 500
+    
+@app.route('/plan', methods=['POST'])
+def plan():
+    data = request.json
+    goal = data.get('goal')
+    _, text = agents.generate_plan(goal)
+    return jsonify({ "plan": text })
 
 if __name__ == '__main__':
     app.run(debug=True)

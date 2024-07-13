@@ -29,6 +29,7 @@ def generate_plan(goal):
     parsed = text.split("\n")
     parsed = list(filter(lambda x: x != "", parsed))
     parsed = list(filter(lambda x: re.match(r"^\d+.", x), parsed))
+    return steps, parsed
 
 
 # e.g. 1. STEP: 1; ACTION: Search for ways to make money; ACCEPTANCE: A list of at least 10 money-making ideas.
