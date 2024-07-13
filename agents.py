@@ -24,8 +24,30 @@ You: Okay, let's go to this nearest pizza restaurant, order a pepperoni pizza an
               
 def generate_plan(goal):
     message = "Develop a step by step plan to help the user achieve the goal: " + goal + ". Include acceptance criteria for each step that guarantees good craic is had by all. Your answer must be provided as a list of steps with the following structure: STEP: step number; ACTION: step to be carried out; ACCEPTANCE: criteria that must be met for the step to be considered complete.\n. Do not use markdown, only plaintext. Each step, action and acceptance criteria must be in the same line and not use newline or semicolons"
+    steps, text = execute_message(message)
+    print(text)
+    parsed = text.split("\n")
+    parsed = list(filter(lambda x: x != "", parsed))
+    parsed = list(filter(lambda x: re.match(r"^\d+.", x), parsed))
+
+
+# e.g. 1. STEP: 1; ACTION: Search for ways to make money; ACCEPTANCE: A list of at least 10 money-making ideas.
+def execute_step(step_string):
+    _, action, acceptance = step_string.split(";")
+    message = f"Execute the action to the best of your abilities: {action}. Make sure to meet the acceptance criteria: {acceptance}. "
     
-    try:
+    tool_results = []
+    for call in step["tool_calls"]:
+        tool_result = invoke_tool(cohere.ToolCall(name=call["name"], parameters=call["parameters"]))
+        tool_results.append({
+            "call": {"name": call["name"], "parameters": call["parameters"]},
+            "outputs": tool_result
+        })
+    
+    return tool_results
+  
+def execute_message(message):
+    try:  
         res = co.chat(
             model="command-r",
             preamble=PREAMBLE,
@@ -63,26 +85,8 @@ def generate_plan(goal):
                 "tool_calls": [{"name": call.name, "parameters": call.parameters} for call in (res.tool_calls or [])],
                 "tool_results": tool_results
             })
-        print(res.text)
-        parsed = res.text.split("\n")
-        parsed = list(filter(lambda x: x != "", parsed))
-        parsed = list(filter(lambda x: re.match(r"^\d+.", x), parsed))
-        return parsed
+            
+        return steps, res.text
 
     except Exception as e:
       return { "error": f"An unexpected error occurred: {e}" } 
-
-# e.g. 1. STEP: 1; ACTION: Search for ways to make money; ACCEPTANCE: A list of at least 10 money-making ideas.
-def execute_step(step_string):
-    _, action, acceptance = step_string.split(";")
-    message = ""
-    
-    # tool_results = []
-    # for call in step["tool_calls"]:
-    #     tool_result = invoke_tool(cohere.ToolCall(name=call["name"], parameters=call["parameters"]))
-    #     tool_results.append({
-    #         "call": {"name": call["name"], "parameters": call["parameters"]},
-    #         "outputs": tool_result
-    #     })
-    
-    # return tool_results
