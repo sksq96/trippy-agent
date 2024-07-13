@@ -1,0 +1,6 @@
+cohere==5.5.8
+duckduckgo_search==6.1.12
+Flask==3.0.3
+Requests==2.32.3
+streamlit==1.33.0
+streamlit_geolocation==0.0.10
