@@ -1,8 +1,17 @@
 import streamlit as st
-import requests
+import anthropic
 from streamlit_geolocation import streamlit_geolocation
 
-API_URL = "http://localhost:5000/generate_plan"  # Update this if your Flask API is hosted elsewhere
+
+
+# i am hungary and want to eat food at the michelin star restaurant in NYC but i'm broke.
+# i'm single and ready to mingle. find me the love of my life.
+
+
+# Initialize the Anthropic client
+client = anthropic.Anthropic(
+    api_key="anthropic-api-key"
+)
 
 st.title("Rube Goldberg Planner 🎭")
 
@@ -27,51 +36,73 @@ else:
 
 goal = st.text_input("Enter your goal:", "Make me more money!")
 
-if st.button("Generate Plan"):
-    with st.spinner("Cooking up some wild ideas..."):
-        # If we have location, include it in the API request
-        payload = {"goal": goal}
-        if location and location.get('latitude') and location.get('longitude'):
-            payload["location"] = {
-                "lat": location['latitude'],
-                "lon": location['longitude']
-            }
+if st.button("Generate Crazy Plan"):
+    if goal:
+        # Define the system message (preamble)
+        PREAMBLE = """
+        Come up with a crazy, weird, not practical plan to make it possible. **Eventually it has to be a succesful.**
+        The plan has to resemble a Rube Goldberg machine, where response of anoe thing leads to another weird and crazy thing.
+        Only list steps. Assume you have tools like: calling someone, booking a cab, money transfer, Google search,
+        and anything else you can think of.
+
+        Context: 
+        - i'm shubham, my phone number of 551-229-7528
+        - i'm in meatpacking district, NYC. 
+        - it's sunny after noon. 
+        - i'm at betaworks, working on a hackathon.
+
+
+        Note: 
+        1. Always output 4 things: step, tool, args, response, result. See example output format below. 
+        2. tool, args, response are in a code block. tool is a python function name, args are the arguments, response HAS to be a JSON value.
+        3. step and result are in a normal text.
+        4. Note the to add all the new lines, and backticks and follow the example format as bwlow.
+
+        <example>
+
+        **Step 1: I'm finding the nearest most expensive restaurant**
         
-        response = requests.post(API_URL, json=payload)
+        ```python
+        tool: find_restaurant
+        args: {'location': 'NYC', 'cuisine': 'italian'}
+        response: [{
+            'restaurant': "Il's Pizza",
+            'price' : '$$$$'
+        }]
+        ```
+        **Result: I found the restaurant "Il's Pizza" with a price of $$$.**
         
-        if response.status_code == 200:
-            plan = response.json()["plan"]
-            
-            st.success("Yo, check out this insane plan! 🤪")
-            
-            for i, step in enumerate(plan, 1):
-                st.markdown(f"### Step {i}")
-                st.write(step["text"])
-                
-                if "tool_calls" in step and step["tool_calls"]:
-                    st.subheader("Tool Calls:")
-                    for call in step["tool_calls"]:
-                        st.write(f"**Tool:** {call['name']}")
-                        st.json(call['parameters'])
-                
-                if "tool_results" in step:
-                    st.subheader("Tool Results:")
-                    for result in step["tool_results"]:
-                        st.write(f"**Tool:** {result['call']['name']}")
-                        st.write("Parameters:")
-                        st.json(result['call']['parameters'])
-                        st.write("Outputs:")
-                        st.json(result['outputs'])
-                
-                st.markdown("---")
-            
-            st.balloons()
-        else:
-            st.error("Oops! Something went wrong. Try again, bestie!")
+        ---
+        
+        Step 2.  ...
+
+        Step 3.  ...
+
+        .
+        .
+        .
+        
+        Step N: ...
+
+        </example>
+        """
+
+        # Generate the plan using Claude
+        message = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=1024*4,
+            system=PREAMBLE,
+            messages=[
+                {"role": "user", "content": goal}
+            ]
+        )
+
+
+        # Display the generated plan
+        st.subheader("Your Crazy Plan:")
+        st.write(message.content[0].text)
+    else:
+        st.warning("Please enter a goal first!")
 
 st.markdown("---")
 st.write("Remember, these plans are just for fun! Don't try this at home, kids! 😜")
-
-# Optionally, display raw location data for debugging
-if st.checkbox("Show raw location data"):
-    st.json(location)
